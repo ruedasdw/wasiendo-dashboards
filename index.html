@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wasiendo OS · Master Console</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Wasiendo OS">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0d0c">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Spline+Sans+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700;800&display=swap');
   :root{--ink:#0b0d0c;--panel:#13161a;--panel-2:#191d22;--line:#2a3138;--line-soft:#1f252a;--fog:#8c98a2;--fog-dim:#5d6873;--paper:#eef2ee;--moss:#7fb069;--moss-deep:#4a7c3f;--amber:#e9b949;--rust:#d4683f;--crimson:#d14b4b;--sky:#5fa8d3;--shadow:0 1px 0 rgba(255,255,255,.03),0 14px 44px -14px rgba(0,0,0,.65);}
@@ -157,12 +163,23 @@ const trim=(s,n)=>{s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?
 /* ---- project list persisted in the URL (#p=base64) so the bookmark IS the saved state ---- */
 let PROJECTS=[]; // [{name,url}]
 function loadProjects(){
+  // Prefer URL hash (bookmarkable, portable across devices). Fall back to localStorage
+  // (device-local; survives home-screen bookmarks even without #p= hash).
   const h=new URLSearchParams(location.hash.slice(1)).get('p');
-  if(h){try{PROJECTS=JSON.parse(decodeURIComponent(escape(atob(h))));}catch(e){PROJECTS=[];}}
+  if(h){
+    try{PROJECTS=JSON.parse(decodeURIComponent(escape(atob(h)))); return;}
+    catch(e){}
+  }
+  try{
+    const stored=localStorage.getItem('wasiendoProjects');
+    if(stored) PROJECTS=JSON.parse(stored);
+  }catch(e){}
 }
 function saveProjects(){
-  const enc=btoa(unescape(encodeURIComponent(JSON.stringify(PROJECTS))));
+  const json=JSON.stringify(PROJECTS);
+  const enc=btoa(unescape(encodeURIComponent(json)));
   history.replaceState(null,'','#p='+enc);
+  try{localStorage.setItem('wasiendoProjects', json);}catch(e){}
 }
 function normalizeURL(u){
   u=(u||'').trim();if(!u)return'';
