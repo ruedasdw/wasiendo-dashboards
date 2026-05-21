@@ -184,9 +184,10 @@ function loadProjects(){
       PROJECTS.push(p);
     }
   }
-  // If the merge produced more than the hash held, refresh hash + storage so
-  // they align (next refresh, the bookmark URL reflects the full project list).
-  if(PROJECTS.length > fromHash.length){
+  // ALWAYS save back if we loaded anything — covers the case where bookmark hash
+  // had everything but localStorage was empty (first visit on this device). Without
+  // this, returning from project-dashboard via back-link finds empty localStorage.
+  if(PROJECTS.length > 0){
     try{saveProjects();}catch(e){}
   }
 }
@@ -276,7 +277,9 @@ function wire(card){
   card.querySelectorAll('[data-rm]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=+b.dataset.rm;
     if(confirm('Remove "'+(PROJECTS[i].name||'this project')+'" from the master?')){PROJECTS.splice(i,1);saveProjects();refreshAll();}});
   card.querySelectorAll('[data-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=+b.dataset.open;
-    const u=normalizeURL(PROJECTS[i].url); window.open('project-dashboard.html?src='+encodeURIComponent(u),'_blank');});
+    // Navigate same-window (NOT _blank) so iOS PWA stays in PWA context.
+    // _blank would escape to Safari proper → different localStorage origin → projects vanish.
+    const u=normalizeURL(PROJECTS[i].url); window.location.href='project-dashboard.html?src='+encodeURIComponent(u);});
 }
 function isStale(iso){ if(!iso)return false; const age=(Date.now()-new Date(iso))/36e5; return age>72; } // >72h
 function ring(p){const r=$('ring'),C=408;r.style.transition='stroke-dashoffset 1.1s cubic-bezier(.2,.7,.2,1)';requestAnimationFrame(()=>r.style.strokeDashoffset=C-(p/100*C));let c=0;const t=$('pct');const step=()=>{c+=Math.ceil((p-c)/8)||1;if(c>=p)c=p;t.textContent=c+'%';if(c<p)requestAnimationFrame(step);};step();}
