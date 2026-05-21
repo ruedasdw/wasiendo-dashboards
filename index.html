@@ -163,17 +163,32 @@ const trim=(s,n)=>{s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?
 /* ---- project list persisted in the URL (#p=base64) so the bookmark IS the saved state ---- */
 let PROJECTS=[]; // [{name,url}]
 function loadProjects(){
-  // Prefer URL hash (bookmarkable, portable across devices). Fall back to localStorage
-  // (device-local; survives home-screen bookmarks even without #p= hash).
+  // MERGE URL hash + localStorage (dedupe by URL). This handles the case where
+  // a home-screen bookmark has a stale hash but localStorage has newer projects
+  // added on the same device — neither source clobbers the other.
+  let fromHash=[];
   const h=new URLSearchParams(location.hash.slice(1)).get('p');
   if(h){
-    try{PROJECTS=JSON.parse(decodeURIComponent(escape(atob(h)))); return;}
-    catch(e){}
+    try{fromHash=JSON.parse(decodeURIComponent(escape(atob(h))))||[];}catch(e){}
   }
+  let fromStorage=[];
   try{
     const stored=localStorage.getItem('wasiendoProjects');
-    if(stored) PROJECTS=JSON.parse(stored);
+    if(stored) fromStorage=JSON.parse(stored)||[];
   }catch(e){}
+  const seen=new Set();
+  PROJECTS=[];
+  for(const p of [...fromHash, ...fromStorage]){
+    if(p && p.url && !seen.has(p.url)){
+      seen.add(p.url);
+      PROJECTS.push(p);
+    }
+  }
+  // If the merge produced more than the hash held, refresh hash + storage so
+  // they align (next refresh, the bookmark URL reflects the full project list).
+  if(PROJECTS.length > fromHash.length){
+    try{saveProjects();}catch(e){}
+  }
 }
 function saveProjects(){
   const json=JSON.stringify(PROJECTS);
@@ -209,9 +224,15 @@ async function refreshAll(){
   let tot={done:0,pending:0,gaps:0},progSum=0,progN=0,ok=0;
   states.forEach(s=>{
     renderCard(s);
-    if(!s.__error){ ok++; const c=s.counts||{done:0,pending:0,gaps:0};
+    if(!s.__error){
+      ok++;
+      const c=s.counts||{done:0,pending:0,gaps:0};
       tot.done+=c.done||0;tot.pending+=c.pending||0;tot.gaps+=c.gaps||0;
-      progSum+=(s.progress||0);progN++; }
+      // Exclude evergreen projects (zero milestones) from portfolio % avg —
+      // their 0% would unfairly drag down the average for arc-based projects.
+      const isEvergreen = (c.done+c.pending+c.gaps) === 0;
+      if(!isEvergreen){ progSum+=(s.progress||0); progN++; }
+    }
   });
   $('sProj').textContent=PROJECTS.length;
   $('sDone').textContent=tot.done;$('sPend').textContent=tot.pending;$('sGap').textContent=tot.gaps;
@@ -234,11 +255,18 @@ function renderCard(s){
   }
   const c=s.counts||{done:0,pending:0,gaps:0};const tw=(c.done+c.pending+c.gaps)||1;
   const gen=s.generated_at?new Date(s.generated_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+  // Evergreen mode: when a project tracks no finite milestone backlog (counts all zero),
+  // show a "Continuous · N sessions" badge instead of a misleading 0% progress ring.
+  const isEvergreen = (c.done+c.pending+c.gaps) === 0;
+  const sessionCount = (s.sessions||[]).length;
+  const progressBlock = isEvergreen
+    ? `<div class="pc-prog-row"><span class="p" style="font-size:18px;color:var(--sky)">● Continuous</span><span class="mini">${sessionCount} session${sessionCount===1?'':'s'} tracked</span></div>`
+    : `<div class="pc-prog-row"><span class="p">${s.progress||0}%</span><span class="mini">${c.done} done · ${c.pending} pending · ${c.gaps} gaps</span></div>
+       <div class="pc-bar"><i style="width:${c.done/tw*100}%;background:linear-gradient(90deg,var(--moss-deep),var(--moss))"></i><i style="width:${c.pending/tw*100}%;background:repeating-linear-gradient(45deg,var(--amber),var(--amber) 5px,#c79f3a 5px,#c79f3a 10px)"></i><i style="width:${c.gaps/tw*100}%;background:var(--rust);opacity:.7"></i></div>`;
   card.innerHTML=`<div class="accent"></div>
     <div class="pc-head"><h3>${esc(s.__name||s.project||'Project')}</h3>${s.doctrine_pin?`<span class="pc-pin">v${esc(s.doctrine_pin)}</span>`:''}</div>
     <div class="pc-phase">${esc(trim(s.phase||s.framing||'—',105))}</div>
-    <div class="pc-prog-row"><span class="p">${s.progress||0}%</span><span class="mini">${c.done} done · ${c.pending} pending · ${c.gaps} gaps</span></div>
-    <div class="pc-bar"><i style="width:${c.done/tw*100}%;background:linear-gradient(90deg,var(--moss-deep),var(--moss))"></i><i style="width:${c.pending/tw*100}%;background:repeating-linear-gradient(45deg,var(--amber),var(--amber) 5px,#c79f3a 5px,#c79f3a 10px)"></i><i style="width:${c.gaps/tw*100}%;background:var(--rust);opacity:.7"></i></div>
+    ${progressBlock}
     <div class="pc-next"><div class="lbl">◆ Next locked step</div><div class="val">${esc(trim(s.next_step||'—',120))}</div></div>
     <div class="pc-foot"><span>${stale?'⚠ ':''}state ${esc(gen)}</span>
       <span class="pc-actions"><button class="btn sm" data-open="${s.__idx}">Open ↗</button><button class="btn sm danger" data-rm="${s.__idx}">✕</button></span></div>`;
