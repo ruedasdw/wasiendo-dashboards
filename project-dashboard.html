@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project State · Wasiendo OS</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="Wasiendo OS">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0c0e0d">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Spline+Sans+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700;800&display=swap');
   :root{--ink:#0c0e0d;--panel:#14171a;--panel-2:#1b1f23;--line:#2a3138;--line-soft:#20262b;--fog:#8c98a2;--fog-dim:#5d6873;--paper:#eef2ee;--moss:#7fb069;--moss-deep:#4a7c3f;--amber:#e9b949;--rust:#d4683f;--sky:#5fa8d3;--shadow:0 1px 0 rgba(255,255,255,.03),0 12px 40px -12px rgba(0,0,0,.6);}
@@ -30,6 +24,7 @@
   .btn{font-family:'Archivo',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--paper);padding:9px 16px;border-radius:9px;transition:.18s;white-space:nowrap}
   .btn:hover{border-color:var(--moss);color:var(--moss)}
   .btn.primary{background:var(--moss);color:#0c1a08;border-color:var(--moss)}
+  .btn.primary:hover{background:var(--moss-deep);color:var(--paper);border-color:var(--moss-deep)}
   .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:20px;margin-top:24px;align-items:start}
   @media(max-width:920px){.grid{grid-template-columns:1fr}}
   .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:17px;padding:22px 24px;box-shadow:var(--shadow)}
@@ -87,10 +82,33 @@
   .tl .badge.clean{color:var(--moss);border:1px solid rgba(127,176,105,.3)}
   .tl .badge.dirty{color:var(--amber);border:1px solid rgba(233,185,73,.3)}
   .empty{color:var(--fog-dim);font-size:13px;font-style:italic;padding:8px 0}
-  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--fog-dim);font-size:11.5px;font-family:'Spline Sans Mono',monospace;flex-wrap:wrap;gap:10px}
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;color:var(--fog-dim);font-size:11.5px;font-family:'Spline Sans Mono',monospace;flex-wrap:wrap;gap:10px}
   .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--moss);margin-right:6px;animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(127,176,105,.4)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(127,176,105,0)}}
   .err{color:var(--rust);font-size:13px;margin-top:14px;font-family:'Spline Sans Mono',monospace}
+  /* v1.7.2 — share button + decay UI */
+  .footer-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn.small{font-size:11px;padding:6px 12px;border-radius:7px}
+  .expires-chip{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--amber);border:1px solid rgba(233,185,73,.3);background:rgba(233,185,73,.06);padding:3px 9px;border-radius:6px}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;max-width:460px;width:100%;box-shadow:var(--shadow)}
+  .modal h3{font-family:'Fraunces',serif;font-size:20px;font-weight:600;margin-bottom:6px}
+  .modal .sub{font-size:13px;color:var(--fog);margin-bottom:18px}
+  .duration-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:18px}
+  @media(max-width:480px){.duration-row{grid-template-columns:1fr 1fr}}
+  .dur-btn{font-family:'Archivo',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--paper);padding:11px 8px;border-radius:9px;transition:.15s;text-align:center}
+  .dur-btn:hover{border-color:var(--moss);color:var(--moss)}
+  .dur-btn.never{border-color:rgba(212,104,63,.4);color:var(--rust)}
+  .dur-btn.never:hover{border-color:var(--rust);background:rgba(212,104,63,.08)}
+  .share-url-box{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:12px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--moss);word-break:break-all;margin-bottom:14px;line-height:1.5;max-height:140px;overflow-y:auto}
+  .copy-btn{width:100%;text-align:center}
+  .copy-btn.copied{background:var(--moss);color:#0c1a08;border-color:var(--moss)}
+  .modal-close{background:none;border:none;color:var(--fog);font-size:13px;cursor:pointer;margin-top:10px;font-family:'Archivo',sans-serif}
+  .modal-close:hover{color:var(--paper)}
+  .expired-view{margin-top:60px;text-align:center;padding:40px 24px;background:var(--panel);border:1px solid rgba(212,104,63,.3);border-radius:18px;box-shadow:var(--shadow)}
+  .expired-view h2{font-family:'Fraunces',serif;font-size:28px;color:var(--rust);margin-bottom:12px}
+  .expired-view p{color:var(--fog);font-size:14px;line-height:1.6;max-width:480px;margin:0 auto 8px}
 </style>
 </head>
 <body>
@@ -109,12 +127,17 @@
   </header>
 
   <div class="loader" id="loader">
-    <a href="./index.html" class="btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">← Master</a>
-    <input id="urlInput" placeholder="state.json URL (Google Drive direct link) — or leave blank to use ./dashboard/state.json">
+    <input id="urlInput" placeholder="state.json URL (gist raw URL — see WOS-3l per-project install) — or leave blank to use ./dashboard/state.json">
     <button class="btn primary" id="loadBtn">Load</button>
     <button class="btn" id="refreshBtn">↻ Refresh</button>
   </div>
   <div class="err" id="err" style="display:none"></div>
+
+  <div class="expired-view" id="expiredView" style="display:none">
+    <h2>Share link expired</h2>
+    <p id="expiredMsg">This dashboard share link reached its expiration date.</p>
+    <p>Ask the project operator for a fresh link if you still need access.</p>
+  </div>
 
   <main id="board" style="display:none">
     <section class="card hero" style="margin-top:24px">
@@ -155,29 +178,74 @@
   </main>
   <footer id="footer" style="display:none">
     <span><span class="live-dot"></span>read-only lens · governance files remain source of truth</span>
-    <span id="footStamp"></span>
+    <div class="footer-actions">
+      <span id="expiresChip" class="expires-chip" style="display:none"></span>
+      <button class="btn small" id="shareBtn">↗ Share</button>
+      <span id="footStamp"></span>
+    </div>
   </footer>
 </div>
+
+<!-- v1.7.2 share modal -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal">
+    <h3>Share this dashboard</h3>
+    <div class="sub" id="shareSub">Choose how long the link should work. Recipient sees this project's read-only view only.</div>
+    <div class="duration-row" id="durationRow">
+      <button class="dur-btn" data-days="1">1 day</button>
+      <button class="dur-btn" data-days="3">3 days</button>
+      <button class="dur-btn" data-days="7">7 days</button>
+      <button class="dur-btn" data-days="30">30 days</button>
+      <button class="dur-btn" data-days="90">90 days</button>
+      <button class="dur-btn never" data-days="0">Never</button>
+    </div>
+    <div id="shareUrlWrap" style="display:none">
+      <div class="share-url-box" id="shareUrlBox"></div>
+      <button class="btn primary copy-btn" id="copyBtn">Copy link</button>
+    </div>
+    <button class="modal-close" id="closeModal">Close</button>
+  </div>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const trim=(s,n)=>{s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n-1)+'…':s;};
 
-// Google Drive share links → direct-download form the browser can fetch
-function normalizeURL(u){
-  u=u.trim(); if(!u) return '';
-  let m=u.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-  if(m) return 'https://drive.google.com/uc?export=download&id='+m[1];
-  m=u.match(/[?&]id=([^&]+)/);
-  if(u.includes('drive.google.com')&&m) return 'https://drive.google.com/uc?export=download&id='+m[1];
-  return u;
+// v1.7.2 — URL params we care about: src (state.json source), exp (unix expiration ts)
+const params = new URLSearchParams(location.search);
+const hasSrc = !!params.get('src');
+const exp = parseInt(params.get('exp')||'0',10);  // unix seconds; 0 = no expiration
+
+// v1.7.2 — UI cleanup: hide loader when ?src= is present (recipient view)
+if(hasSrc) $('loader').style.display='none';
+
+// v1.7.2 — expiration gate: render expired view + bail if past exp
+function checkExpired(){
+  if(!exp) return false;
+  const now = Math.floor(Date.now()/1000);
+  if(now > exp){
+    $('expiredView').style.display='block';
+    const d = new Date(exp*1000);
+    $('expiredMsg').textContent = 'This dashboard share link expired on ' +
+      d.toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}) + '.';
+    return true;
+  }
+  return false;
 }
+
+// v1.7.1 — Drive-URL normalization removed (Drive CORS-blocked; gist hosting now canonical).
+// Kept identity passthrough for any non-Drive URLs.
+function normalizeURL(u){return (u||'').trim();}
+
 function getURL(){
-  const p=new URLSearchParams(location.search).get('src');
+  const p=params.get('src');
   return p || $('urlInput').value.trim() || './dashboard/state.json';
 }
+
 async function load(){
   $('err').style.display='none';
+  if(checkExpired()) return;
   const url=normalizeURL(getURL());
   try{
     const r=await fetch(url,{cache:'no-store'});
@@ -185,9 +253,10 @@ async function load(){
     render(await r.json());
   }catch(e){
     $('err').style.display='block';
-    $('err').textContent='Could not load '+url+' — '+e.message+'. (If this is a Google Drive link, make sure it is shared "anyone with link".)';
+    $('err').textContent='Could not load '+url+' — '+e.message+'. (Gist URL must be the raw form; see WOS-3l doctrine.)';
   }
 }
+
 function render(s){
   $('board').style.display='block'; $('footer').style.display='flex';
   $('projName').textContent=s.project||'Project';
@@ -217,13 +286,82 @@ function render(s){
   if(!tl.children.length)tl.innerHTML='<div class="empty">No sessions.</div>';
   const g=s.git||{};
   $('gitBox').innerHTML=`branch: <span style="color:var(--paper)">${esc(g.branch||'—')}</span><br>last commit: <span style="color:var(--moss)">${esc(g.last_commit||'—')}</span> ${esc(trim(g.last_commit_msg||'',60))}<br>tree: <span style="color:${g.dirty?'var(--amber)':'var(--moss)'}">${g.dirty?'dirty':'clean'}</span>`;
+
+  // v1.7.2 — expires chip in footer if recipient view + exp set + still valid
+  if(hasSrc && exp){
+    const d=new Date(exp*1000);
+    const daysLeft = Math.ceil((exp - Date.now()/1000)/86400);
+    $('expiresChip').textContent = 'expires in ' + daysLeft + 'd · ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    $('expiresChip').style.display='inline-block';
+  }
 }
+
 function fill(id,arr,empty,cls){const ul=$(id);ul.innerHTML='';if(!arr||!arr.length){ul.innerHTML=`<li style="color:var(--fog-dim);font-style:italic">${empty}</li>`;return;}arr.forEach(t=>{const li=document.createElement('li');li.textContent=trim(t,120);ul.appendChild(li);});}
+
 function ring(p){const r=$('ring'),C=440;r.style.transition='stroke-dashoffset 1.2s cubic-bezier(.2,.7,.2,1)';requestAnimationFrame(()=>r.style.strokeDashoffset=C-(p/100*C));let c=0;const t=$('pct');const step=()=>{c+=Math.ceil((p-c)/8)||1;if(c>=p)c=p;t.textContent=c+'%';if(c<p)requestAnimationFrame(step);};step();}
+
 $('loadBtn').onclick=load;$('refreshBtn').onclick=load;
 $('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')load();});
+
+// v1.7.2 — share button + duration modal + clipboard copy
+function buildShareURL(days){
+  // Use current ?src= if present (operator viewing recipient-shape URL);
+  // else fall back to the urlInput value (operator viewing own dashboard).
+  const src = params.get('src') || $('urlInput').value.trim();
+  if(!src){
+    alert('No source URL to share. Paste a gist raw URL into the loader first.');
+    return null;
+  }
+  const base = location.origin + location.pathname;
+  const qs = new URLSearchParams();
+  qs.set('src', src);
+  if(days > 0){
+    const expTs = Math.floor(Date.now()/1000) + (days * 86400);
+    qs.set('exp', String(expTs));
+  }
+  return base + '?' + qs.toString();
+}
+
+$('shareBtn').onclick = () => {
+  $('shareModal').classList.add('show');
+  $('shareUrlWrap').style.display='none';
+  $('copyBtn').classList.remove('copied');
+  $('copyBtn').textContent='Copy link';
+};
+$('closeModal').onclick = () => $('shareModal').classList.remove('show');
+$('shareModal').addEventListener('click', e => { if(e.target === $('shareModal')) $('shareModal').classList.remove('show'); });
+
+$('durationRow').addEventListener('click', e => {
+  const btn = e.target.closest('.dur-btn');
+  if(!btn) return;
+  const days = parseInt(btn.dataset.days, 10);
+  const url = buildShareURL(days);
+  if(!url) return;
+  $('shareUrlBox').textContent = url;
+  $('shareUrlWrap').style.display = 'block';
+  const label = days === 0 ? 'never expires' : 'expires in ' + days + ' day' + (days === 1 ? '' : 's');
+  $('shareSub').textContent = 'Link created — ' + label + '. Copy below.';
+});
+
+$('copyBtn').onclick = async () => {
+  const txt = $('shareUrlBox').textContent;
+  try {
+    await navigator.clipboard.writeText(txt);
+    $('copyBtn').classList.add('copied');
+    $('copyBtn').textContent = '✓ Copied!';
+    setTimeout(() => $('shareModal').classList.remove('show'), 900);
+  } catch(e) {
+    // Fallback for browsers that block clipboard in this context
+    const range = document.createRange();
+    range.selectNode($('shareUrlBox'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    $('copyBtn').textContent = 'Press ⌘C / Ctrl+C to copy';
+  }
+};
+
 // auto-load if ?src= is present, else try local default quietly
-if(new URLSearchParams(location.search).get('src')) load();
+if(hasSrc) load();
 else load();
 </script>
 </body>
