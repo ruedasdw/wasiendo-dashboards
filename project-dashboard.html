@@ -126,6 +126,13 @@
     </div>
   </header>
 
+  <!-- Back-nav stays visible on both author and recipient views.
+       Recipients clicking it land on an empty master dashboard (localStorage is
+       per-device + gists are unlisted), so they can't snoop other projects. -->
+  <div style="margin-top:18px">
+    <a href="./index.html" class="btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">← Master</a>
+  </div>
+
   <div class="loader" id="loader">
     <input id="urlInput" placeholder="state.json URL (gist raw URL — see WOS-3l per-project install) — or leave blank to use ./dashboard/state.json">
     <button class="btn primary" id="loadBtn">Load</button>
