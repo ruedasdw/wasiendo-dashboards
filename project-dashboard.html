@@ -219,13 +219,24 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const trim=(s,n)=>{s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n-1)+'…':s;};
 
-// v1.7.2 — URL params we care about: src (state.json source), exp (unix expiration ts)
+// v1.7.2 — URL params we care about: src (state.json source), exp (unix expiration ts),
+//          share (recipient marker — present iff link was generated via Share button)
 const params = new URLSearchParams(location.search);
 const hasSrc = !!params.get('src');
 const exp = parseInt(params.get('exp')||'0',10);  // unix seconds; 0 = no expiration
+const isRecipient = params.get('share') === '1';  // v1.7.3.1: recipient-view detection
 
 // v1.7.2 — UI cleanup: hide loader when ?src= is present (recipient view)
 if(hasSrc) $('loader').style.display='none';
+
+// v1.7.3.1 — hide Share button on recipient view to prevent re-sharing with extended time.
+// Operators viewing their own dashboard (from master nav or local) still see Share.
+// Recipients see the dashboard read-only with whatever expiration the operator set.
+if(isRecipient){
+  // Defer until DOM is ready (script is at end of body so elements exist; safe to query now)
+  const sb = $('shareBtn');
+  if(sb) sb.style.display = 'none';
+}
 
 // v1.7.2 — expiration gate: render expired view + bail if past exp
 function checkExpired(){
@@ -326,6 +337,9 @@ function buildShareURL(days){
     const expTs = Math.floor(Date.now()/1000) + (days * 86400);
     qs.set('exp', String(expTs));
   }
+  // v1.7.3.1 — share=1 marker hides the Share button on recipient view,
+  // preventing recipients from re-generating links with extended expirations.
+  qs.set('share', '1');
   return base + '?' + qs.toString();
 }
 
