@@ -126,10 +126,10 @@
     </div>
   </header>
 
-  <!-- Back-nav stays visible on both author and recipient views.
-       Recipients clicking it land on an empty master dashboard (localStorage is
-       per-device + gists are unlisted), so they can't snoop other projects. -->
-  <div style="margin-top:18px">
+  <!-- v1.7.5 — Back-nav hidden on recipient view (share=1). Doctrine reversed
+       from earlier "always visible" decision: recipients shouldn't navigate;
+       they see only the project state the operator shared. -->
+  <div id="backNav" style="margin-top:18px">
     <a href="./index.html" class="btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">← Master</a>
   </div>
 
@@ -230,12 +230,15 @@ const isRecipient = params.get('share') === '1';  // v1.7.3.1: recipient-view de
 if(hasSrc) $('loader').style.display='none';
 
 // v1.7.3.1 — hide Share button on recipient view to prevent re-sharing with extended time.
-// Operators viewing their own dashboard (from master nav or local) still see Share.
-// Recipients see the dashboard read-only with whatever expiration the operator set.
+// v1.7.5 — ALSO hide back-nav on recipient view (doctrine reversed: recipients
+//            shouldn't navigate; they see only the project state the operator shared).
+// Operators viewing their own dashboard (from master nav or local) still see Share + back-nav.
 if(isRecipient){
   // Defer until DOM is ready (script is at end of body so elements exist; safe to query now)
   const sb = $('shareBtn');
   if(sb) sb.style.display = 'none';
+  const bn = $('backNav');
+  if(bn) bn.style.display = 'none';
 }
 
 // v1.7.2 — expiration gate: render expired view + bail if past exp

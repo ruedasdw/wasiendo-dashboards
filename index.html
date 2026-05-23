@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v1.7.5 — iOS PWA meta so homescreen-saved icon doesn't freeze launch URL -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wasiendo">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <title>Wasiendo OS · Master Console</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Spline+Sans+Mono:wght@400;500;600&family=Archivo:wght@400;500;600;700;800&display=swap');
@@ -154,15 +160,34 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const trim=(s,n)=>{s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n-1)+'…':s;};
 
-/* ---- project list persisted in the URL (#p=base64) so the bookmark IS the saved state ---- */
+/* ---- project list persisted in URL hash AND localStorage (v1.7.5 dual-write).
+       URL hash makes the bookmark shareable + restorable on cold link-open.
+       localStorage survives return-from-project-view (the back-nav strips the hash).
+       Hash takes precedence on load; localStorage is fallback. ---- */
 let PROJECTS=[]; // [{name,url}]
+const LS_KEY = 'wasiendo.master.projects.v1';
 function loadProjects(){
   const h=new URLSearchParams(location.hash.slice(1)).get('p');
-  if(h){try{PROJECTS=JSON.parse(decodeURIComponent(escape(atob(h))));}catch(e){PROJECTS=[];}}
+  if(h){
+    try{PROJECTS=JSON.parse(decodeURIComponent(escape(atob(h))));}
+    catch(e){PROJECTS=[];}
+  }
+  // v1.7.5 — fall back to localStorage if hash is empty (return-from-project nav,
+  // iOS PWA cold-launch from frozen homescreen URL, etc.)
+  if(!PROJECTS.length){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(raw){ PROJECTS = JSON.parse(raw) || []; }
+    }catch(e){}
+  }
+  // Re-seed hash if we loaded from localStorage so URL is shareable again.
+  if(PROJECTS.length) saveProjects();
 }
 function saveProjects(){
   const enc=btoa(unescape(encodeURIComponent(JSON.stringify(PROJECTS))));
   history.replaceState(null,'','#p='+enc);
+  // v1.7.5 — mirror to localStorage so return-from-project loads correctly.
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(PROJECTS)); }catch(e){}
 }
 function normalizeURL(u){
   u=(u||'').trim();if(!u)return'';
