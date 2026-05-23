@@ -265,8 +265,15 @@ async function load(){
   $('err').style.display='none';
   if(checkExpired()) return;
   const url=normalizeURL(getURL());
+  // v1.7.3.2 — append cache-buster query to defeat GitHub's CDN cache on gist
+  // raw URLs. Without this, the CDN serves stale state.json for hours-to-days
+  // even when the gist itself is freshly updated. {cache:'no-store'} only
+  // controls the browser cache, not GitHub's edge cache. Caught 2026-05-22
+  // when 30hr-stale dashboards traced to CDN cache, not hook failure.
+  const sep = url.includes('?') ? '&' : '?';
+  const bustedUrl = url + sep + 'cb=' + Date.now();
   try{
-    const r=await fetch(url,{cache:'no-store'});
+    const r=await fetch(bustedUrl,{cache:'no-store'});
     if(!r.ok) throw new Error('HTTP '+r.status);
     render(await r.json());
   }catch(e){
